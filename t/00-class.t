@@ -33,13 +33,13 @@ use Test::More;
     use Moose;
     use MooseX::Capsule;
 
-    interface [qw(
+    interface qw(
         add
         delete
         exists
         is_empty
         size
-    )];
+    );
     implementation 'Foo::Set::Implementation';
 }
 

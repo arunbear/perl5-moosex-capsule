@@ -14,9 +14,9 @@ Moose::Exporter->setup_import_methods(
 );
  
 sub interface {
-    my ($meta, $array_ref) = @_;
+    my $meta = shift;
 
-    $meta->set_interface($array_ref);
+    $meta->set_interface(\@_);
 
     if ($meta->has_implementation) {
         $meta->add_delegate();
@@ -24,9 +24,9 @@ sub interface {
 }
 
 sub implementation {
-    my ($meta, $role_name) = @_;
+    my $meta = shift;
 
-    $meta->set_implementation($role_name);
+    $meta->set_implementation(\@_);
 
     if ($meta->has_interface) {
         $meta->add_delegate();

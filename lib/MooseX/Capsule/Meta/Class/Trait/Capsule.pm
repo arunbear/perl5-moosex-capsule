@@ -16,7 +16,7 @@ has interface => (
 has implementation => (
     is  => 'rw',
     writer => 'set_implementation',
-    isa    => 'RoleName',
+    isa    => 'ArrayRef[RoleName]',
     predicate => 'has_implementation',
 );
 
@@ -29,7 +29,7 @@ sub add_delegate {
             handles  => $self->interface,
             default => sub {
                 my $obj = Moose::Object->new;
-                apply_all_roles($obj, $self->implementation);
+                apply_all_roles($obj, @{$self->implementation});
                 $obj;
             }
         )
