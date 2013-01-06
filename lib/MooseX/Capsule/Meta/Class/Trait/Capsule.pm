@@ -23,14 +23,24 @@ has implementation => (
 sub add_delegate {
     my ($self) = @_;
 
+    my $target_metaclass = Moose::Meta::Class->create_anon_class(roles => $self->implementation); 
+    my @constructor_args;
+    my @required = grep { $_->is_required } $target_metaclass->get_all_attributes;
+
+    if (@required) {
+        $self->add_before_method_modifier(
+            BUILDARGS => sub {
+                my $class = shift;
+                @constructor_args = @_;
+            }
+        );
+    }
     $self->add_attribute(
-        __proxy => (
+        __target => (
             init_arg => undef,
             handles  => $self->interface,
             default => sub {
-                my $obj = Moose::Object->new;
-                apply_all_roles($obj, @{$self->implementation});
-                $obj;
+                $target_metaclass->new_object(@constructor_args);
             }
         )
     );
