@@ -43,7 +43,7 @@ sub add_delegate {
         );
     }
     $self->add_attribute(
-        __target => (
+        "$$:".time() => (
             init_arg => undef,
             handles  => [@{ $self->interface }, @{ $self->protected_methods }],
             default => sub {
