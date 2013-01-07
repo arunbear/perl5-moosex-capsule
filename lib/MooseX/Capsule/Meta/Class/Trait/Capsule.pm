@@ -20,6 +20,13 @@ has implementation => (
     predicate => 'has_implementation',
 );
 
+has protected_methods => (
+    is  => 'rw',
+    writer => 'set_protected_methods',
+    isa    => 'ArrayRef[Str]',
+    default => sub { [] },
+);
+
 sub add_delegate {
     my ($self) = @_;
 
@@ -38,12 +45,32 @@ sub add_delegate {
     $self->add_attribute(
         __target => (
             init_arg => undef,
-            handles  => $self->interface,
+            handles  => [@{ $self->interface }, @{ $self->protected_methods }],
             default => sub {
                 $target_metaclass->new_object(@constructor_args);
             }
         )
     );
+    $self->secure_protected_methods;
+}
+
+sub secure_protected_methods {
+    my ($self) = @_;
+
+    my $class = $self->name;
+    foreach my $method ( @{ $self->protected_methods } ) {
+        next unless $self->has_method($method);
+
+        $self->add_before_method_modifier(
+            $method => sub {
+                my $self = shift;
+
+                my $caller = caller(2);
+                confess "Call to $method() not permitted from $caller"
+                  unless $caller eq $class || $caller->isa($class);
+            }
+        );
+    }
 }
 
 1;
