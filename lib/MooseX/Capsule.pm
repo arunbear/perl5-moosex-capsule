@@ -7,7 +7,7 @@ use Moose::Exporter;
 our $VERSION = 0.001_001;
 
 Moose::Exporter->setup_import_methods(
-    with_meta       => [qw/interface implementation protected/],
+    with_meta       => [qw/interface implementation/],
     class_metaroles => {
         class => [ 'MooseX::Capsule::Meta::Class::Trait::Capsule' ],
     },
@@ -31,12 +31,6 @@ sub implementation {
     if ($meta->has_interface) {
         $meta->add_delegate();
     }
-}
-
-sub protected {
-    my $meta = shift;
-
-    $meta->set_protected_methods(\@_);
 }
 
 1;
