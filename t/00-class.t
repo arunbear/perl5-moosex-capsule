@@ -30,7 +30,6 @@ use Test::More;
 
 {
     package Foo::Set;
-    use Moose;
     use MooseX::Capsule;
 
     interface qw(

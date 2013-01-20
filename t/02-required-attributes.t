@@ -37,7 +37,6 @@ use Test::More;
 
 {
     package Foo::FruitPicker;
-    use Moose;
     use MooseX::Capsule;
 
     interface qw(

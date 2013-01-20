@@ -24,7 +24,6 @@ use Test::More;
 
 {
     package Foo;
-    use Moose;
     use MooseX::Capsule;
 
     interface qw(
