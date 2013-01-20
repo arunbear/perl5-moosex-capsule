@@ -7,7 +7,7 @@ use Moose::Exporter;
 our $VERSION = 0.001_001;
 
 Moose::Exporter->setup_import_methods(
-    with_meta       => [qw/interface implementation/],
+    with_meta       => [qw/interface interface_role implementation/],
     class_metaroles => {
         class => [ 'MooseX::Capsule::Meta::Class::Trait::Capsule' ],
     },
@@ -24,12 +24,23 @@ sub interface {
     }
 }
 
+sub interface_role {
+    my $meta = shift;
+    my $role = shift;
+
+    $meta->set_interface_role($role);
+
+    if ($meta->has_implementation) {
+        $meta->add_delegate();
+    }
+}
+
 sub implementation {
     my $meta = shift;
 
     $meta->set_implementation(\@_);
 
-    if ($meta->has_interface) {
+    if ($meta->has_interface || $meta->has_interface_role) {
         $meta->add_delegate();
     }
 }

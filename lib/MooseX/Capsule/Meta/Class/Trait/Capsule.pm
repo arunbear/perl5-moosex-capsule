@@ -2,7 +2,7 @@ package MooseX::Capsule::Meta::Class::Trait::Capsule;
 
 use 5.006;
 use Moose::Role;
-use Moose::Util qw(apply_all_roles);
+use Moose::Util qw(apply_all_roles find_meta);
  
 our $VERSION = 0.001_001;
 
@@ -12,6 +12,13 @@ has interface => (
     isa    => 'ArrayRef[Str]',
     predicate => 'has_interface',
 );
+
+has interface_role => (
+    is  => 'rw',
+    writer => 'set_interface_role',
+    isa    => 'RoleName',
+    predicate => 'has_interface_role',
+);
  
 has implementation => (
     is  => 'rw',
@@ -20,9 +27,28 @@ has implementation => (
     predicate => 'has_implementation',
 );
 
+my $validate_interface = sub {
+    my ($self) = @_;
+
+    my $interface = $self->interface_role
+      or return;
+
+    my $metarole = find_meta($interface);
+
+    if ( $metarole->get_attribute_list ) {
+        Moose->throw_error("Attributes not permitted in interface role");
+    }
+
+    my @methods = $metarole->get_method_list;
+    unless (scalar @methods == 1 && $methods[0] eq 'meta') {
+        Moose->throw_error("Methods not permitted in interface role");
+    }
+};
+
 sub add_delegate {
     my ($self) = @_;
 
+    $self->$validate_interface();
     my $target_metaclass = Moose::Meta::Class->create_anon_class(roles => $self->implementation); 
     my @constructor_args;
     my @required = grep { $_->is_required } $target_metaclass->get_all_attributes;
@@ -38,7 +64,7 @@ sub add_delegate {
     $self->add_attribute(
         "$$:".time() => (
             init_arg => undef,
-            handles  => $self->interface,
+            handles  => $self->interface || $self->interface_role,
             default => sub {
                 $target_metaclass->new_object(@constructor_args);
             }
