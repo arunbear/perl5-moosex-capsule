@@ -51,6 +51,7 @@ use Test::More;
 }
 
 my $p = Foo::FruitPicker->new(quota => 3);
+ok($p->does('Foo::FruitPicker::RoleInterface'), 'obj does the interface role');
 $p->pick for 1 .. 3;
 is($p->picked, 3, 'picked');
 
@@ -89,5 +90,26 @@ eval {
 };
 
 like($@, qr'Methods not permitted in interface role', 'no methods in interface role');
+
+{
+    package Foo::FruitPicker::RoleInterfaceWithMethodUnimplemented;
+    use Moose::Role;
+
+    requires qw(pick picked bar);
+}
+
+eval {
+    package Foo::FruitPicker4;
+    use MooseX::Capsule;
+
+    interface_role 'Foo::FruitPicker::RoleInterfaceWithMethodUnimplemented';
+    implementation qw(Foo::FruitPicker::Role);
+};
+
+like(
+    $@, 
+    qr|'Foo::FruitPicker::RoleInterfaceWithMethodUnimplemented' requires the method 'bar' to be implemented|, 
+    'check interface role against implementation'
+);
 
 done_testing;

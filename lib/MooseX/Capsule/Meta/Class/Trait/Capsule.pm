@@ -49,7 +49,11 @@ sub add_delegate {
     my ($self) = @_;
 
     $self->$validate_interface();
+
     my $target_metaclass = Moose::Meta::Class->create_anon_class(roles => $self->implementation); 
+    my $interface_role = $self->interface_role;
+    apply_all_roles($target_metaclass->name, $interface_role) if $interface_role;
+
     my @constructor_args;
     my @required = grep { $_->is_required } $target_metaclass->get_all_attributes;
 
@@ -70,9 +74,17 @@ sub add_delegate {
             }
         )
     );
+    apply_all_roles($self->name, $interface_role) if $interface_role;
 }
 
 before 'add_role' => sub  {
+    my $self = shift;
+    my $role = shift;
+
+    my $interface_role = $self->interface_role;
+    if ($interface_role && $interface_role eq $role->name) {
+        return;
+    }
     Moose->throw_error("Roles not permitted in interface");
 };
 
