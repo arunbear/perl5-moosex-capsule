@@ -46,6 +46,19 @@ sub add_delegate {
     );
 }
 
+before 'add_role' => sub  {
+    Moose->throw_error("Roles not permitted in interface");
+};
+
+before 'add_attribute' => sub  {
+    my $self = shift;
+    my $name = shift;
+
+    if ( $name !~ /^\d+:\d+$/ ) {
+        Moose->throw_error("Attributes not permitted in interface");
+    }
+};
+
 1;
 
 __END__

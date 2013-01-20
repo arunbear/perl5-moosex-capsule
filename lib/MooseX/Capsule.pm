@@ -11,6 +11,7 @@ Moose::Exporter->setup_import_methods(
     class_metaroles => {
         class => [ 'MooseX::Capsule::Meta::Class::Trait::Capsule' ],
     },
+    also => 'Moose',
 );
  
 sub interface {
