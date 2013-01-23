@@ -27,6 +27,7 @@ has implementation => (
     predicate => 'has_implementation',
 );
 
+use Carp::Always;
 my $validate_interface = sub {
     my ($self) = @_;
 
@@ -34,6 +35,7 @@ my $validate_interface = sub {
       or return;
 
     my $metarole = find_meta($interface);
+    #use XXX -with => 'Data::Dumper'; XXX [$interface, $metarole];
 
     if ( $metarole->get_attribute_list ) {
         Moose->throw_error("Attributes not permitted in interface role");
@@ -68,7 +70,7 @@ sub add_delegate {
     $self->add_attribute(
         "$$:".time() => (
             init_arg => undef,
-            handles  => $self->interface || $self->interface_role,
+            handles  => $self->interface_role || $self->interface,
             default => sub {
                 $target_metaclass->new_object(@constructor_args);
             }

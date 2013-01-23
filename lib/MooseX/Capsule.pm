@@ -17,7 +17,11 @@ Moose::Exporter->setup_import_methods(
 sub interface {
     my $meta = shift;
 
-    $meta->set_interface(\@_);
+    #$meta->set_interface(\@_);
+    my $metarole = Moose::Meta::Role->create_anon_role;
+    $metarole->add_required_methods(@_);
+    #use XXX -with => 'Data::Dumper'; XXX $metarole->name;
+    $meta->set_interface_role($metarole->name);
 
     if ($meta->has_implementation) {
         $meta->add_delegate();
