@@ -88,7 +88,8 @@ before 'add_role' => sub  {
     my $self = shift;
     my $role = shift;
 
-    my $interface_role = $self->interface_role || $self->interface_metarole->name;
+    my $interface_metarole = $self->interface_metarole;
+    my $interface_role = $self->interface_role || ($interface_metarole && $interface_metarole->name);
     if ($interface_role && $interface_role eq $role->name) {
         return;
     }
