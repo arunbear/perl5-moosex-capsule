@@ -6,13 +6,6 @@ use Moose::Util qw(apply_all_roles);
  
 our $VERSION = 0.001_001;
 
-has interface => (
-    is  => 'rw',
-    writer => 'set_interface',
-    isa    => 'ArrayRef[Str]',
-    predicate => 'has_interface',
-);
-
 has interface_role => (
     is  => 'rw',
     writer => 'set_interface_role',
@@ -81,7 +74,7 @@ sub add_delegate {
             }
         )
     );
-    apply_all_roles($self->name, $interface_role);
+    apply_all_roles($self->name, $interface_role) if $self->has_interface_role;
 }
 
 before 'add_role' => sub  {

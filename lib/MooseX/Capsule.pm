@@ -17,7 +17,6 @@ Moose::Exporter->setup_import_methods(
 sub interface {
     my $meta = shift;
 
-    #$meta->set_interface(\@_);
     my $metarole = Moose::Meta::Role->create_anon_role;
     $metarole->add_required_methods(@_);
     $meta->set_interface_metarole($metarole);
