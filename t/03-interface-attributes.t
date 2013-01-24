@@ -58,7 +58,7 @@ like($@, qr'Attributes not permitted in interface', 'no attributes in interface'
 }
 
 eval {
-    package Foo::FruitPicker;
+    package Foo::FruitPicker2;
     use MooseX::Capsule;
 
     with 'Foo::FruitPicker::RoleWithAttribute';
@@ -80,7 +80,7 @@ like($@, qr'Attributes not permitted in interface', 'no attributes via roles');
 }
 
 eval {
-    package Foo::FruitPicker;
+    package Foo::FruitPicker3;
     use MooseX::Capsule;
 
     with 'Foo::FruitPicker::RoleWithMethod';

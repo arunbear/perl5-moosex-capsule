@@ -20,8 +20,7 @@ sub interface {
     #$meta->set_interface(\@_);
     my $metarole = Moose::Meta::Role->create_anon_role;
     $metarole->add_required_methods(@_);
-    #use XXX -with => 'Data::Dumper'; XXX $metarole->name;
-    $meta->set_interface_role($metarole->name);
+    $meta->set_interface_metarole($metarole);
 
     if ($meta->has_implementation) {
         $meta->add_delegate();
@@ -44,7 +43,7 @@ sub implementation {
 
     $meta->set_implementation(\@_);
 
-    if ($meta->has_interface || $meta->has_interface_role) {
+    if ($meta->has_interface_metarole || $meta->has_interface_role) {
         $meta->add_delegate();
     }
 }

@@ -2,7 +2,7 @@ package MooseX::Capsule::Meta::Class::Trait::Capsule;
 
 use 5.006;
 use Moose::Role;
-use Moose::Util qw(apply_all_roles find_meta);
+use Moose::Util qw(apply_all_roles);
  
 our $VERSION = 0.001_001;
 
@@ -19,6 +19,13 @@ has interface_role => (
     isa    => 'RoleName',
     predicate => 'has_interface_role',
 );
+
+has interface_metarole => (
+    is  => 'rw',
+    writer => 'set_interface_metarole',
+    isa    => 'Moose::Meta::Role',
+    predicate => 'has_interface_metarole',
+);
  
 has implementation => (
     is  => 'rw',
@@ -27,15 +34,13 @@ has implementation => (
     predicate => 'has_implementation',
 );
 
-use Carp::Always;
 my $validate_interface = sub {
     my ($self) = @_;
 
     my $interface = $self->interface_role
       or return;
 
-    my $metarole = find_meta($interface);
-    #use XXX -with => 'Data::Dumper'; XXX [$interface, $metarole];
+    my $metarole = Class::MOP::class_of($interface);
 
     if ( $metarole->get_attribute_list ) {
         Moose->throw_error("Attributes not permitted in interface role");
@@ -53,8 +58,8 @@ sub add_delegate {
     $self->$validate_interface();
 
     my $target_metaclass = Moose::Meta::Class->create_anon_class(roles => $self->implementation); 
-    my $interface_role = $self->interface_role;
-    apply_all_roles($target_metaclass->name, $interface_role) if $interface_role;
+    my $interface_role = $self->interface_role || $self->interface_metarole->name;
+    apply_all_roles($target_metaclass->name, $interface_role);
 
     my @constructor_args;
     my @required = grep { $_->is_required } $target_metaclass->get_all_attributes;
@@ -70,20 +75,20 @@ sub add_delegate {
     $self->add_attribute(
         "$$:".time() => (
             init_arg => undef,
-            handles  => $self->interface_role || $self->interface,
+            handles  => $interface_role,
             default => sub {
                 $target_metaclass->new_object(@constructor_args);
             }
         )
     );
-    apply_all_roles($self->name, $interface_role) if $interface_role;
+    apply_all_roles($self->name, $interface_role);
 }
 
 before 'add_role' => sub  {
     my $self = shift;
     my $role = shift;
 
-    my $interface_role = $self->interface_role;
+    my $interface_role = $self->interface_role || $self->interface_metarole->name;
     if ($interface_role && $interface_role eq $role->name) {
         return;
     }
