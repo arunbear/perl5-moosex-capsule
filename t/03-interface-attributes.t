@@ -93,4 +93,23 @@ eval {
 };
 
 like($@, qr'Roles not permitted in interface', 'no roles in interface');
+
+{
+    package Foo::FruitPicker4;
+    use MooseX::Capsule;
+
+    interface qw(
+        pick
+        picked
+    );
+    implementation qw(Foo::FruitPicker::Role);
+}
+
+package main;
+
+my $obj = Foo::FruitPicker4->new(quota => 1);
+
+eval { $obj->meta->add_attribute(test => (is => 'rw')) };
+like($@, qr'Attributes not permitted in interface', 'no attributes via meta');
+
 done_testing;
