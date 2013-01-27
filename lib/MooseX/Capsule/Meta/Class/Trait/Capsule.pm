@@ -55,13 +55,20 @@ sub add_delegate {
     apply_all_roles($target_metaclass->name, $interface_role);
 
     my @constructor_args;
-    my @required = grep { $_->is_required } $target_metaclass->get_all_attributes;
+    my %required = map { $_->name => 1 } grep { $_->is_required } $target_metaclass->get_all_attributes;
 
-    if (@required) {
+    if (%required) {
         $self->add_before_method_modifier(
-            BUILDARGS => sub {
+            new => sub {
                 my $class = shift;
-                @constructor_args = @_;
+
+                if ( $target_metaclass->has_method('BUILDARGS') ) {
+                    @constructor_args = @_; # can't guess what BUILDARGS returns
+                }
+                else {
+                    my %arg = @_ == 1 && ref $_[0] eq 'HASH' ? %{$_[0]} : @_;
+                    @constructor_args = map { $_ => $arg{$_} } grep { $required{$_} } keys %arg;
+                }
             }
         );
     }
