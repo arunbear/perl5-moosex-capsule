@@ -2,6 +2,7 @@ package MooseX::Capsule;
 
 use 5.006;
 use strict;
+use Moose ();
 use Moose::Exporter;
 
 our $VERSION = 0.001_001;
