@@ -41,6 +41,7 @@ sub combine_roles {
     my $interface_meta = find_meta($interface_role);
     my %is_interface_method = map { $_ => 1 } $interface_meta->get_required_method_list, 'meta';
 
+    # guard internal methods
     foreach my $method ( $self->get_method_list ) {
         next if $is_interface_method{$method};
 
@@ -57,11 +58,20 @@ sub combine_roles {
         );
     }
 
+    # only required attributes can use init_arg
     foreach my $attr ( $self->get_all_attributes ) {
         next if $attr->is_required;
         next unless defined $attr->init_arg;
 
-        cluck $attr->name . ' is not required but has init_arg: ' . $attr->init_arg;
+        $self->remove_init_arg($attr);
+        #my $writer = $attr->writer || $attr->accessor;
+        #my $name   = $attr->name  ;
+
+        #if ( $writer 
+        #     && ! $is_interface_method{$writer} 
+        #   ) {
+        #    $self->remove_init_arg($attr);
+        #}
     }
 }
 
@@ -109,6 +119,7 @@ before 'add_attribute' => sub  {
 
     my $name = $attr->name;
 
+    # only attributes defined in an implementation are allowed
     foreach my $role ( @{ $self->implementation } ) {
         my $meta = find_meta($role);
 
@@ -118,6 +129,15 @@ before 'add_attribute' => sub  {
     }
     Moose->throw_error("Attribute: $name not permitted in interface");
 };
+
+sub remove_init_arg {
+    my ($self, $attr) = @_;
+
+    my $name = $attr->name;
+    $self->remove_attribute($name);
+    $self->add_attribute($attr->clone(name => $name, init_arg => undef));
+}
+
 
 1;
 
