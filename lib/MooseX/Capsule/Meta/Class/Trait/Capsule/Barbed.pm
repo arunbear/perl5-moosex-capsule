@@ -105,10 +105,8 @@ before 'add_role' => sub  {
         return;
     }
 
-    foreach my $imp_role ( @{ $self->implementation } ) {
-        if ( $name eq $imp_role ) {
-            return;
-        }
+    if ( $name eq join('|' => @{ $self->implementation }) ) {
+        return;
     }
     Moose->throw_error("Roles not permitted in interface: $name");
 };
