@@ -54,44 +54,89 @@ __END__
 
 =head1 NAME
 
-MooseX::Capsule - The great new MooseX::Capsule!
+MooseX::Capsule - Moose with declarative interfaces and enchanced encapsulation.
 
 =head1 VERSION
 
 Version 0.001_001
 
-
-
-
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+    # A basic Set class
 
-Perhaps a little code snippet.
-
+    package Foo::Set;
     use MooseX::Capsule;
 
-    my $foo = MooseX::Capsule->new();
-    ...
+    interface qw(
+        add
+        delete
+        exists
+        is_empty
+        size
+    );
+    implementation 'Foo::Set::Implementation';
 
-=head1 EXPORT
+    1;
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+    # A role that provides its implementation
 
-=head1 SUBROUTINES/METHODS
+    package Foo::Set::Implementation;
+    use Moose::Role;
 
-=head2 function1
+    has 'store' => (
+        is => 'ro',
+        init_arg => undef,
+        default => sub { {} },
+        traits  => ['Hash'],
+        handles => {
+            clear  => 'clear',
+            delete => 'delete',
+            exists => 'exists',
+            set    => 'set',
+            size   => 'count',
+            is_empty => 'is_empty',
+        },
+    );
 
+    sub add {
+        my ($self, $item) = @_;
+        $self->set($item => 1);
+    }
 
-sub function1 {
-}
+    1;
+    
+    # Code that uses the Set class
+    # ... Methods declared via interface can be used
+    
+    my $s = Foo::Set->new;
 
-=head2 function2
+    $s->add('foo');
+    $s->add('bar');
+    say $s->size; # 2
 
+    $s->delete('foo');
+    say $s->size; # 1
 
-sub function2 {
-}
+    # ... but methods not declared in the interface cannot
+    $s->clear(); # dies
+
+=head1 EXPORTED FUNCTIONS
+
+=head2 interface (@methods)
+
+This function is used to declare the methods that can be called by users of the current class.
+
+Use either interface or interface_role, but not both.
+
+=head2 interface_role ($role)
+
+This function is used to declare an interface role i.e. one containing only required methods, that can be called by users of the current class.
+
+Use either interface or interface_role, but not both.
+
+=head2 implementation (@roles)
+
+This function is used to declare one or more implementation roles that define the attributes and methods providing the functionality of the current class.
 
 =head1 AUTHOR
 
@@ -109,7 +154,6 @@ You can find documentation for this module with the perldoc command.
 
     perldoc MooseX::Capsule
 
-
 You can also look for information at:
 
 =over 4
@@ -119,7 +163,6 @@ You can also look for information at:
 L<http://search.cpan.org/dist/MooseX-Capsule/>
 
 =back
-
 
 =head1 ACKNOWLEDGEMENTS
 
