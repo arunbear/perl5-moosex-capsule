@@ -105,7 +105,7 @@ before 'add_role' => sub  {
         return;
     }
 
-    if ( $name eq join('|' => @{ $self->implementation }) ) {
+    if ( $name eq join('|' => @{ $self->implementation || [] }) ) {
         return;
     }
     Moose->throw_error("Roles not permitted in interface: $name");
@@ -115,10 +115,10 @@ before 'add_attribute' => sub  {
     my $self = shift;
     my $attr = shift;
 
-    my $name = $attr->name;
+    my $name = blessed $attr ? $attr->name : $attr;
 
     # only attributes defined in an implementation are allowed
-    foreach my $role ( @{ $self->implementation } ) {
+    foreach my $role ( @{ $self->implementation || [] } ) {
         my $meta = find_meta($role);
 
         if ( $meta->has_attribute($name) ) {
