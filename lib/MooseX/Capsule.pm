@@ -54,7 +54,7 @@ __END__
 
 =head1 NAME
 
-MooseX::Capsule - Moose with declarative interfaces and enchanced encapsulation.
+MooseX::Capsule - A Moose extension for creating modular classes.
 
 =head1 VERSION
 
@@ -119,6 +119,28 @@ Version 0.001_001
 
     # ... but methods not declared in the interface cannot
     $s->clear(); # dies
+
+=head1 DESCRIPTION
+
+MooseX::Capsule is a Moose extension that simplifies the creation of modular classes.
+
+This is acheived by:
+
+=over 4
+
+=item *
+
+Requiring the interface of the class (i.e. those methods provided for users of the class) 
+to be delcared and only allowing those methods to be called.
+
+This has the added benefit of making it easy to see at a glance what the class does.
+
+=item *
+
+Requiring all attributes and methods of the class to be defined in roles. 
+This encourages code reuse via roles or composistion rather than via inheritance. 
+
+=back
 
 =head1 EXPORTED FUNCTIONS
 
