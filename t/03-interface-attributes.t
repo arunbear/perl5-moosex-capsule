@@ -112,4 +112,25 @@ my $obj = Foo::FruitPicker4->new(quota => 1);
 eval { $obj->meta->add_attribute(test => (is => 'rw')) };
 like($@, qr'Attributes not permitted in interface', 'no attributes via meta');
 
+{
+    package Foo::BaseClass;
+    use Moose;
+
+    has 'bar' => (is => 'rw');
+}
+
+eval {
+    package Foo::FruitPicker5;
+    use MooseX::Capsule;
+
+    extends 'Foo::BaseClass';
+
+    interface qw(
+        pick
+        picked
+    );
+    implementation qw(Foo::FruitPicker::Role);
+};
+like($@, qr'Inheritance not permitted', 'no attributes via inheritance');
+
 done_testing;

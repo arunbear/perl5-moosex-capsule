@@ -105,6 +105,13 @@ before 'add_attribute' => sub  {
     }
 };
 
+before 'superclasses' => sub {
+    my ($self, $super) = @_;
+    return unless $super;
+
+    Moose->throw_error("Inheritance not permitted");
+};
+
 1;
 
 __END__
