@@ -26,6 +26,11 @@ has implementation => (
     predicate => 'has_implementation',
 );
 
+sub find_interface_role {
+    my ($self) = @_;
+    return $self->interface_role || $self->interface_metarole->name;
+}
+
 sub validate_interface {
     my ($self) = @_;
 

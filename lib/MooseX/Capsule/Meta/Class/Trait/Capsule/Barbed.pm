@@ -6,20 +6,14 @@ use Carp qw(cluck);
 use List::MoreUtils qw(any);
 use Moose::Util qw(apply_all_roles find_meta);
 
-with qw(MooseX::Capsule::Meta::Class::Trait::Capsule::Common);
- 
+with qw(MooseX::Capsule::Meta::Class::Trait::Capsule::Porous);
+
 our $VERSION = 0.001_001;
 
-sub combine_roles {
+after 'combine_roles' => sub {
     my ($self) = @_;
 
-    $self->validate_interface();
-
-    my $interface_role = $self->interface_role || $self->interface_metarole->name;
-    apply_all_roles($self->name, @{ $self->implementation });
-    apply_all_roles($self->name, $interface_role);
-
-    my $interface_meta = find_meta($interface_role);
+    my $interface_meta = find_meta($self->find_interface_role);
     my %is_interface_method = map { $_ => 1 } $interface_meta->get_required_method_list, 'meta';
 
     # guard internal methods
@@ -38,56 +32,7 @@ sub combine_roles {
             }
         );
     }
-
-    # only required attributes can use init_arg
-    foreach my $attr ( $self->get_all_attributes ) {
-        next if $attr->is_required;
-        next unless defined $attr->init_arg;
-
-        $self->remove_init_arg($attr);
-        #my $writer = $attr->writer || $attr->accessor;
-        #my $name   = $attr->name  ;
-
-        #if ( $writer 
-        #     && ! $is_interface_method{$writer} 
-        #   ) {
-        #    $self->remove_init_arg($attr);
-        #}
-    }
-}
-
-sub allow_non_interface_role {
-    my ($self, $name) = @_;
-
-    if ( $name eq join('|' => @{ $self->implementation || [] }) ) {
-        return 1;
-    }
-}
-
-before 'add_attribute' => sub  {
-    my $self = shift;
-    my $attr = shift;
-
-    my $name = blessed $attr ? $attr->name : $attr;
-
-    # only attributes defined in an implementation are allowed
-    foreach my $role ( @{ $self->implementation || [] } ) {
-        my $meta = find_meta($role);
-
-        if ( $meta->has_attribute($name) ) {
-            return;
-        }
-    }
-    Moose->throw_error("Attribute: $name not permitted in interface");
 };
-
-sub remove_init_arg {
-    my ($self, $attr) = @_;
-
-    my $name = $attr->name;
-    $self->remove_attribute($name);
-    $self->add_attribute($attr->clone(name => $name, init_arg => undef));
-}
 
 1;
 
