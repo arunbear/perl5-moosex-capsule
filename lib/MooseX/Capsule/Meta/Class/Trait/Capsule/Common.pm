@@ -1,69 +1,79 @@
-package MooseX::Capsule::Meta::Class::Trait::Capsule;
+package MooseX::Capsule::Meta::Class::Trait::Capsule::Common;
 
 use 5.006;
 use Moose::Role;
-use Moose::Util qw(apply_all_roles);
  
-with qw(MooseX::Capsule::Meta::Class::Trait::Capsule::Common);
-
 our $VERSION = 0.001_001;
 
-sub add_delegate {
+has interface_role => (
+    is  => 'rw',
+    writer => 'set_interface_role',
+    isa    => 'RoleName',
+    predicate => 'has_interface_role',
+);
+
+has interface_metarole => (
+    is  => 'rw',
+    writer => 'set_interface_metarole',
+    isa    => 'Moose::Meta::Role',
+    predicate => 'has_interface_metarole',
+);
+ 
+has implementation => (
+    is  => 'rw',
+    writer => 'set_implementation',
+    isa    => 'ArrayRef[RoleName]',
+    predicate => 'has_implementation',
+);
+
+sub validate_interface {
     my ($self) = @_;
 
-    $self->validate_interface();
+    my $interface = $self->interface_role
+      or return;
 
-    my $target_metaclass = Moose::Meta::Class->create_anon_class(roles => $self->implementation); 
-    my $interface_role = $self->interface_role || $self->interface_metarole->name;
-    apply_all_roles($target_metaclass->name, $interface_role);
+    my $metarole = Class::MOP::class_of($interface);
 
-    my @constructor_args;
-    my %required = map { $_->name => 1 } grep { $_->is_required } $target_metaclass->get_all_attributes;
-
-    if (%required) {
-        $self->add_before_method_modifier(
-            new => sub {
-                my $class = shift;
-
-                if ( $target_metaclass->has_method('BUILDARGS') ) {
-                    @constructor_args = @_; # can't guess what BUILDARGS returns
-                }
-                else {
-                    my %arg = @_ == 1 && ref $_[0] eq 'HASH' ? %{$_[0]} : @_;
-                    @constructor_args = map { $_ => $arg{$_} } grep { $required{$_} } keys %arg;
-                }
-            }
-        );
+    if ( $metarole->get_attribute_list ) {
+        Moose->throw_error("Attributes not permitted in interface role");
     }
-    $self->add_attribute(
-        "$$:".time() => (
-            init_arg => undef,
-            handles  => $interface_role,
-            default => sub {
-                $target_metaclass->new_object(@constructor_args);
-            }
-        )
-    );
-    apply_all_roles($self->name, $interface_role) if $self->has_interface_role;
+
+    my @methods = $metarole->get_method_list;
+    unless (scalar @methods == 1 && $methods[0] eq 'meta') {
+        Moose->throw_error("Methods not permitted in interface role");
+    }
 }
 
-sub allow_non_interface_role { 0 }
-
-before 'add_attribute' => sub  {
+before 'add_role' => sub  {
     my $self = shift;
-    my $name = shift;
+    my $role = shift;
 
-    if ( $name !~ /^\d+:\d+$/ ) {
-        Moose->throw_error("Attributes not permitted in interface");
+    my $name = $role->name;
+
+    if ($self->is_interface_role($name)) {
+        return;
     }
+    if ($self->allow_non_interface_role($name)) {
+        return;
+    }
+    $self->no_roles_in_interface($name);
 };
 
-before 'superclasses' => sub {
-    my ($self, $super) = @_;
-    return unless $super;
+sub is_interface_role {
+    my ($self, $name) = @_;
 
-    Moose->throw_error("Inheritance not permitted");
-};
+    my $interface_metarole = $self->interface_metarole;
+    my $interface_role = $self->interface_role || ($interface_metarole && $interface_metarole->name);
+    if ($interface_role && $interface_role eq $name) {
+        return 1;
+    }
+}
+
+sub no_roles_in_interface {
+    my ($self, $name) = @_;
+    Moose->throw_error("Roles not permitted in interface: $name");
+}
+
 
 1;
 
@@ -72,7 +82,7 @@ __END__
 
 =head1 NAME
 
-MooseX::Capsule::Meta::Class::Trait::Interface - The great new MooseX::Capsule::Meta::Class::Trait::Interface!
+
 
 =head1 VERSION
 

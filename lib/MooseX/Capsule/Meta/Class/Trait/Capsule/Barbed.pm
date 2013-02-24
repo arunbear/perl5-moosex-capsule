@@ -5,29 +5,10 @@ use Moose::Role;
 use Carp qw(cluck);
 use List::MoreUtils qw(any);
 use Moose::Util qw(apply_all_roles find_meta);
+
+with qw(MooseX::Capsule::Meta::Class::Trait::Capsule::Common);
  
 our $VERSION = 0.001_001;
-
-has interface_role => (
-    is  => 'rw',
-    writer => 'set_interface_role',
-    isa    => 'RoleName',
-    predicate => 'has_interface_role',
-);
-
-has interface_metarole => (
-    is  => 'rw',
-    writer => 'set_interface_metarole',
-    isa    => 'Moose::Meta::Role',
-    predicate => 'has_interface_metarole',
-);
- 
-has implementation => (
-    is  => 'rw',
-    writer => 'set_implementation',
-    isa    => 'ArrayRef[RoleName]',
-    predicate => 'has_implementation',
-);
 
 sub combine_roles {
     my ($self) = @_;
@@ -75,41 +56,13 @@ sub combine_roles {
     }
 }
 
-sub validate_interface {
-    my ($self) = @_;
-
-    my $interface = $self->interface_role
-      or return;
-
-    my $metarole = Class::MOP::class_of($interface);
-
-    if ( $metarole->get_attribute_list ) {
-        Moose->throw_error("Attributes not permitted in interface role");
-    }
-
-    my @methods = $metarole->get_method_list;
-    unless (scalar @methods == 1 && $methods[0] eq 'meta') {
-        Moose->throw_error("Methods not permitted in interface role");
-    }
-}
-
-before 'add_role' => sub  {
-    my $self = shift;
-    my $role = shift;
-
-    my $name = $role->name;
-
-    my $interface_metarole = $self->interface_metarole;
-    my $interface_role = $self->interface_role || ($interface_metarole && $interface_metarole->name);
-    if ($interface_role && $interface_role eq $name) {
-        return;
-    }
+sub allow_non_interface_role {
+    my ($self, $name) = @_;
 
     if ( $name eq join('|' => @{ $self->implementation || [] }) ) {
-        return;
+        return 1;
     }
-    Moose->throw_error("Roles not permitted in interface: $name");
-};
+}
 
 before 'add_attribute' => sub  {
     my $self = shift;
@@ -135,7 +88,6 @@ sub remove_init_arg {
     $self->remove_attribute($name);
     $self->add_attribute($attr->clone(name => $name, init_arg => undef));
 }
-
 
 1;
 
